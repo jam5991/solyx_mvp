@@ -174,37 +174,537 @@ To ensure **Solyx AI's MVP** delivers maximum value while remaining **lean and s
 ```
 solyx-ai/
 ├── .github/
-│   └── workflows/                    # CI/CD pipelines
+│   └── workflows/
+│       ├── ci.yaml                  # Main CI pipeline
+│       │   # Runs tests, builds images, security scans
+│       │   # Structure:
+│       │   # - name: Solyx AI CI
+│       │   # - on: [push, pull_request]
+│       │   # - jobs:
+│       │   #   - test
+│       │   #   - build
+│       │   #   - security-scan
+│       │
+│       └── cd.yaml                 # Deployment pipeline
+│          # Deploys to environments:
+│          #   - dev branch -> development environment
+│          #   - main branch -> production environment
+│          # Structure:
+│          # - name: Deployment
+│          # - on:
+│          #   push:
+│          #     branches: [main, dev]
+│        
+│
 ├── deploy/
-│   ├── kubernetes/                   # K8s manifests
-│   │   ├── drm/                     # Resource management deployments
-│   │   ├── cmo/                     # Cluster orchestration deployments
-│   │   └── sdn/                     # Network controller deployments
-│   ├── helm/                        # Helm charts
-│   └── terraform/                   # Infrastructure as Code
-├── docs/
-│   ├── architecture/
-│   ├── api/
-│   └── deployment/
+│   ├── kubernetes/
+│   │   ├── drm/                    # Distributed Resource Manager
+│   │   │   ├── base/
+│   │   │   │   ├── kustomization.yaml
+│   │   │   │   │   # Resources:
+│   │   │   │   │   # - namespace.yaml
+│   │   │   │   │   # - rbac/*
+│   │   │   │   │   # - services/*
+│   │   │   │   │   # - deployments/*
+│   │   │   │   │
+│   │   │   │   ├── namespace.yaml
+│   │   │   │   │   # namespace: solyx-drm
+│   │   │   │   │
+│   │   │   │   ├── rbac/
+│   │   │   │   │   ├── role.yaml
+│   │   │   │   │   │   # Permissions:
+│   │   │   │   │   │   # - Resource management
+│   │   │   │   │   │   # - Node access
+│   │   │   │   │   │   # - Metrics collection
+│   │   │   │   │   │
+│   │   │   │   │   ├── rolebinding.yaml
+│   │   │   │   │   │   # Binds roles to service accounts
+│   │   │   │   │   │
+│   │   │   │   │   └── serviceaccount.yaml
+│   │   │   │   │       # Service account: drm-service-account
+│   │   │   │   │
+│   │   │   │   ├── configmaps/
+│   │   │   │   │   ├── allocator-config.yaml
+│   │   │   │   │   │   # Configuration:
+│   │   │   │   │   │   # - Resource allocation policies
+│   │   │   │   │   │   # - Scheduling parameters
+│   │   │   │   │   │   # - Energy optimization settings
+│   │   │   │   │   │
+│   │   │   │   │   └── metrics-config.yaml
+│   │   │   │   │       # Configuration:
+│   │   │   │   │       # - Metrics collection intervals
+│   │   │   │   │       # - Resource tracking parameters
+│   │   │   │   │
+│   │   │   │   ├── services/
+│   │   │   │   │   ├── allocator-svc.yaml
+│   │   │   │   │   │   # Service:
+│   │   │   │   │   │   # - Port: 8080
+│   │   │   │   │   │   # - Type: ClusterIP
+│   │   │   │   │   │
+│   │   │   │   │   ├── tracker-svc.yaml
+│   │   │   │   │   │   # Service:
+│   │   │   │   │   │   # - Port: 8081
+│   │   │   │   │   │   # - Type: ClusterIP
+│   │   │   │   │   │
+│   │   │   │   │   └── metrics-svc.yaml
+│   │   │   │   │       # Service:
+│   │   │   │   │       # - Port: 8082
+│   │   │   │   │       # - Type: ClusterIP
+│   │   │   │   │
+│   │   │   │   └── deployments/
+│   │   │   │       ├── allocator.yaml
+│   │   │   │       │   # Deployment:
+│   │   │   │       │   # - Replicas: 2
+│   │   │   │       │   # - Image: solyx/drm-allocator:latest
+│   │   │   │       │   # - Resources, probes, etc.
+│   │   │   │       │
+│   │   │   │       ├── tracker.yaml
+│   │   │   │       │   # Deployment:
+│   │   │   │       │   # - Replicas: 2
+│   │   │   │       │   # - Image: solyx/drm-tracker:latest
+│   │   │   │       │
+│   │   │   │       └── metrics.yaml
+│   │   │   │           # Deployment:
+│   │   │   │           # - Replicas: 1
+│   │   │   │           # - Image: solyx/drm-metrics:latest
+│   │   │   │
+│   │   │   └── overlays/
+│   │   │       ├── development/
+│   │   │       │   ├── kustomization.yaml
+│   │   │       │   │   # Patches and configurations for dev
+│   │   │       │   └── patches/
+│   │   │       │       # Resource adjustments for dev
+│   │   │       │
+│   │   │       ├── staging/
+│   │   │       │   # Similar structure to development
+│   │   │       │
+│   │   │       └── production/
+│   │   │           # Similar structure to development
+│   │   ├── cmo/                    # Cluster Management & Orchestration
+│   │   │   ├── base/
+│   │   │   │   ├── kustomization.yaml
+│   │   │   │   │   # Resources:
+│   │   │   │   │   # - namespace.yaml
+│   │   │   │   │   # - rbac/*
+│   │   │   │   │   # - services/*
+│   │   │   │   │   # - deployments/*
+│   │   │   │   │
+│   │   │   │   ├── namespace.yaml
+│   │   │   │   │   # namespace: solyx-cmo
+│   │   │   │   │
+│   │   │   │   ├── rbac/
+│   │   │   │   │   ├── role.yaml
+│   │   │   │   │   │   # Permissions:
+│   │   │   │   │   │   # - Cluster-wide orchestration
+│   │   │   │   │   │   # - Workload management
+│   │   │   │   │   │   # - Monitoring access
+│   │   │   │   │   │
+│   │   │   │   │   ├── rolebinding.yaml
+│   │   │   │   │   └── serviceaccount.yaml
+│   │   │   │   │       # Service account: cmo-service-account
+│   │   │   │   │
+│   │   │   │   ├── configmaps/
+│   │   │   │   │   ├── scheduler-config.yaml
+│   │   │   │   │   │   # Configuration:
+│   │   │   │   │   │   # - Scheduling algorithms
+│   │   │   │   │   │   # - Workload priorities
+│   │   │   │   │   │   # - Resource quotas
+│   │   │   │   │   │
+│   │   │   │   │   ├── orchestrator-config.yaml
+│   │   │   │   │   │   # Configuration:
+│   │   │   │   │   │   # - Cluster management policies
+│   │   │   │   │   │   # - Auto-scaling rules
+│   │   │   │   │   │
+│   │   │   │   │   └── monitoring-config.yaml
+│   │   │   │   │       # Configuration:
+│   │   │   │   │       # - Prometheus integration
+│   │   │   │   │       # - Alert rules
+│   │   │   │   │
+│   │   │   │   ├── services/
+│   │   │   │   │   ├── scheduler-svc.yaml
+│   │   │   │   │   │   # Service:
+│   │   │   │   │   │   # - Port: 8090
+│   │   │   │   │   │   # - Type: ClusterIP
+│   │   │   │   │   │
+│   │   │   │   │   ├── orchestrator-svc.yaml
+│   │   │   │   │   │   # Service:
+│   │   │   │   │   │   # - Port: 8091
+│   │   │   │   │   │   # - Type: ClusterIP
+│   │   │   │   │   │
+│   │   │   │   │   └── monitoring-svc.yaml
+│   │   │   │   │
+│   │   │   │   └── deployments/
+│   │   │   │       ├── scheduler.yaml
+│   │   │   │       │   # Deployment:
+│   │   │   │       │   # - Replicas: 2
+│   │   │   │       │   # - Image: solyx/cmo-scheduler:latest
+│   │   │   │       │
+│   │   │   │       ├── orchestrator.yaml
+│   │   │   │       │   # Deployment:
+│   │   │   │       │   # - Replicas: 2
+│   │   │   │       │   # - Image: solyx/cmo-orchestrator:latest
+│   │   │   │       │
+│   │   │   │       └── monitoring.yaml
+│   │   │   │
+│   │   │   └── overlays/
+│   │   │       ├── development/
+│   │   │       ├── staging/
+│   │   │       └── production/
+│   │   │
+│   │   └── sdn/                    # Software-Defined Networking
+│   │       ├── base/
+│   │       │   ├── kustomization.yaml
+│   │       │   ├── namespace.yaml
+│   │       │   │   # namespace: solyx-sdn
+│   │       │   │
+│   │       │   ├── rbac/
+│   │       │   │   ├── role.yaml
+│   │       │   │   │   # Permissions:
+│   │       │   │   │   # - Network policy management
+│   │       │   │   │   # - Traffic control
+│   │       │   │   │
+│   │       │   │   ├── rolebinding.yaml
+│   │       │   │   └── serviceaccount.yaml
+│   │       │   │
+│   │       │   ├── configmaps/
+│   │       │   │   ├── controller-config.yaml
+│   │       │   │   │   # Configuration:
+│   │       │   │   │   # - Network policies
+│   │       │   │   │   # - Traffic rules
+│   │       │   │   │
+│   │       │   │   ├── routing-config.yaml
+│   │       │   │   │   # Configuration:
+│   │       │   │   │   # - Routing algorithms
+│   │       │   │   │   # - Path optimization
+│   │       │   │   │
+│   │       │   │   └── metrics-config.yaml
+│   │       │   │
+│   │       │   ├── services/
+│   │       │   │   ├── controller-svc.yaml
+│   │       │   │   │   # Service:
+│   │       │   │   │   # - Port: 8100
+│   │       │   │   │   # - Type: ClusterIP
+│   │       │   │   │
+│   │       │   │   ├── routing-svc.yaml
+│   │       │   │   └── metrics-svc.yaml
+│   │       │   │
+│   │       │   └── deployments/
+│   │       │       ├── controller.yaml
+│   │       │       │   # Deployment:
+│   │       │       │   # - Replicas: 2
+│   │       │       │   # - Image: solyx/sdn-controller:latest
+│   │       │       │
+│   │       │       ├── routing.yaml
+│   │       │       └── metrics.yaml
+│   │       │
+│   │       └── overlays/
+│   │           ├── development/
+│   │           ├── staging/
+│   │           └── production/
+│   ├── helm/
+│   │   ├── solyx-drm/
+│   │   │   ├── Chart.yaml
+│   │   │   │   # apiVersion: v2
+│   │   │   │   # name: solyx-drm
+│   │   │   │   # version: 0.1.0
+│   │   │   │   # dependencies:
+│   │   │   │   #   - name: prometheus
+│   │   │   │   #   - name: grafana
+│   │   │   │
+│   │   │   ├── values.yaml
+│   │   │   │   # Default configuration values
+│   │   │   │   # - Resource limits
+│   │   │   │   # - Replica counts
+│   │   │   │   # - Image tags
+│   │   │   │
+│   │   │   ├── templates/
+│   │   │   │   ├── _helpers.tpl
+│   │   │   │   ├── deployment.yaml
+│   │   │   │   ├── service.yaml
+│   │   │   │   ├── configmap.yaml
+│   │   │   │   └── rbac/
+│   │   │   │
+│   │   │   └── values/
+│   │   │       ├── dev.yaml
+│   │   │       ├── staging.yaml
+│   │   │       └── prod.yaml
+│   │   │
+│   │   ├── solyx-cmo/
+│   │   │   # Similar structure to solyx-drm
+│   │   │
+│   │   └── solyx-sdn/
+│   │       # Similar structure to solyx-drm
+│   │
+│   └── terraform/
+│       ├── modules/
+│       │   ├── metapod/
+│       │   │   ├── main.tf
+│       │   │   │   # MetaPod infrastructure
+│       │   │   │   # - Compute resources
+│       │   │   │   # - Storage configuration
+│       │   │   │
+│       │   │   ├── variables.tf
+│       │   │   ├── outputs.tf
+│       │   │   └── versions.tf
+│       │   │
+│       │   ├── networking/
+│       │   │   ├── main.tf
+│       │   │   │   # Network infrastructure
+│       │   │   │   # - VPC configuration
+│       │   │   │   # - Subnet layout
+│       │   │   │   # - Security groups
+│       │   │   │
+│       │   │   ├── variables.tf
+│       │   │   ├── outputs.tf
+│       │   │   └── versions.tf
+│       │   │
+│       │   └── monitoring/
+│       │       ├── main.tf
+│       │       │   # Monitoring infrastructure
+│       │       │   # - Prometheus setup
+│       │       │   # - Grafana configuration
+│       │       │
+│       │       ├── variables.tf
+│       │       ├── outputs.tf
+│       │       └── versions.tf
+│       │
+│       ├── environments/
+│       │   ├── dev/
+│       │   │   ├── main.tf
+│       │   │   │   # Development environment
+│       │   │   │   # module "metapod" { ... }
+│       │   │   │   # module "networking" { ... }
+│       │   │   │
+│       │   │   ├── variables.tf
+│       │   │   └── terraform.tfvars
+│       │   │
+│       │   ├── staging/
+│       │   │   # Similar structure to dev
+│       │   │
+│       │   └── prod/
+│       │       # Similar structure to dev
+│       │
+│       └── variables.tf
+│
 ├── src/
-│   ├── drm/                         # Distributed Resource Manager
-│   │   ├── allocator/              # Resource allocation logic
-│   │   ├── tracker/                # Resource tracking service
-│   │   └── metrics/                # Resource metrics collection
-│   ├── cmo/                         # Cluster Management & Orchestration
-│   │   ├── scheduler/              # Workload scheduling
-│   │   ├── orchestrator/           # Cluster orchestration
-│   │   └── monitoring/             # Integration with Prometheus
-│   ├── sdn/                         # Software-Defined Networking
-│   │   ├── controller/             # Network control plane
-│   │   ├── routing/                # Traffic routing optimization
-│   │   └── metrics/                # Network metrics collection
-│   └── common/                      # Shared utilities and libraries
+│   ├── drm/
+│   │   ├── allocator/
+│   │   │   ├── main.py
+│   │   │   │   # Resource allocation logic
+│   │   │   │   # class ResourceAllocator:
+│   │   │   │   #   def allocate_resources()
+│   │   │   │   #   def deallocate_resources()
+│   │   │   │
+│   │   │   ├── models/
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── resource.py
+│   │   │   │   └── allocation.py
+│   │   │   │
+│   │   │   ├── services/
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── kubernetes.py
+│   │   │   │   └── metrics.py
+│   │   │   │
+│   │   │   ├── utils/
+│   │   │   │   ├── __init__.py
+│   │   │   │   └── helpers.py
+│   │   │   │
+│   │   │   ├── config/
+│   │   │   │   ├── __init__.py
+│   │   │   │   └── settings.py
+│   │   │   │
+│   │   │   ├── tests/
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── test_allocation.py
+│   │   │   │   └── test_services.py
+│   │   │   │
+│   │   │   └── requirements.txt
+│   │   │
+│   │   ├── tracker/
+│   │   │   # Similar structure to allocator
+│   │   │
+│   │   └── metrics/
+│   │       # Similar structure to allocator
+│   ├── cmo/
+│   │   ├── scheduler/
+│   │   │   ├── main.py
+│   │   │   │   # Workload scheduling logic
+│   │   │   │   # class WorkloadScheduler:
+│   │   │   │   #   def schedule_workload()
+│   │   │   │   #   def optimize_placement()
+│   │   │   │
+│   │   │   ├── models/
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── workload.py
+│   │   │   │   └── scheduler.py
+│   │   │   │
+│   │   │   ├── services/
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── kubernetes.py
+│   │   │   │   └── optimization.py
+│   │   │   │
+│   │   │   ├── algorithms/
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── placement.py
+│   │   │   │   └── optimization.py
+│   │   │   │
+│   │   │   └── tests/
+│   │   │
+│   │   ├── orchestrator/
+│   │   │   ├── main.py
+│   │   │   │   # Cluster orchestration logic
+│   │   │   │   # class ClusterOrchestrator:
+│   │   │   │   #   def manage_clusters()
+│   │   │   │   #   def balance_workloads()
+│   │   │   │
+│   │   │   ├── models/
+│   │   │   │   ├── cluster.py
+│   │   │   │   └── node.py
+│   │   │   │
+│   │   │   ├── services/
+│   │   │   │   ├── kubernetes.py
+│   │   │   │   └── monitoring.py
+│   │   │   │
+│   │   │   └── policies/
+│   │   │       ├── scaling.py
+│   │   │       └── placement.py
+│   │   │
+│   │   └── monitoring/
+│   │       ├── main.py
+│   │       ├── collectors/
+│   │       │   ├── metrics.py
+│   │       │   └── events.py
+│   │       │
+│   │       └── exporters/
+│   │           ├── prometheus.py
+│   │           └── grafana.py
+│   │
+│   ├── sdn/
+│   │   ├── controller/
+│   │   │   ├── main.py
+│   │   │   │   # Network controller logic
+│   │   │   │   # class NetworkController:
+│   │   │   │   #   def manage_network()
+│   │   │   │   #   def optimize_routes()
+│   │   │   │
+│   │   │   ├── models/
+│   │   │   │   ├── network.py
+│   │   │   │   └── policy.py
+│   │   │   │
+│   │   │   ├── services/
+│   │   │   │   ├── routing.py
+│   │   │   │   └── policy.py
+│   │   │   │
+│   │   │   └── algorithms/
+│   │   │       ├── path_optimization.py
+│   │   │       └── traffic_engineering.py
+│   │   │
+│   │   ├── routing/
+│   │   │   ├── main.py
+│   │   │   ├── models/
+│   │   │   └── services/
+│   │   │
+│   │   └── metrics/
+│   │       ├── main.py
+│   │       ├── collectors/
+│   │       └── exporters/
+│   │
+│   └── common/
+│       ├── utils/
+│       │   ├── __init__.py
+│       │   ├── logging.py
+│       │   ├── metrics.py
+│       │   └── kubernetes.py
+│       │
+│       └── config/
+│           ├── __init__.py
+│           └── settings.py
+│
 ├── tests/
 │   ├── unit/
+│   │   ├── drm/
+│   │   │   ├── test_allocator.py
+│   │   │   ├── test_tracker.py
+│   │   │   └── test_metrics.py
+│   │   │
+│   │   ├── cmo/
+│   │   │   ├── test_scheduler.py
+│   │   │   ├── test_orchestrator.py
+│   │   │   └── test_monitoring.py
+│   │   │
+│   │   └── sdn/
+│   │       ├── test_controller.py
+│   │       ├── test_routing.py
+│   │       └── test_metrics.py
+│   │
 │   ├── integration/
+│   │   ├── test_drm_cmo_integration.py
+│   │   ├── test_cmo_sdn_integration.py
+│   │   └── test_full_stack.py
+│   │
 │   └── e2e/
-├── tools/                           # Development and deployment tools
+│       ├── scenarios/
+│       │   ├── workload_scheduling.py
+│       │   ├── network_optimization.py
+│       │   └── resource_management.py
+│       │
+│       └── fixtures/
+│           ├── cluster_setup.py
+│           └── test_data.py
+│
+├── docs/
+│   ├── architecture/
+│   │   ├── drm.md
+│   │   │   # DRM Architecture
+│   │   │   # - Component Overview
+│   │   │   # - Resource Management
+│   │   │   # - Scaling Strategy
+│   │   │
+│   │   ├── cmo.md
+│   │   │   # CMO Architecture
+│   │   │   # - Scheduling Logic
+│   │   │   # - Cluster Management
+│   │   │
+│   │   └── sdn.md
+│   │       # SDN Architecture
+│   │       # - Network Topology
+│   │       # - Traffic Management
+│   │
+│   ├── api/
+│   │   ├── drm-api.md
+│   │   │   # DRM API Documentation
+│   │   │   # - Endpoints
+│   │   │   # - Request/Response Format
+│   │   │
+│   │   ├── cmo-api.md
+│   │   └── sdn-api.md
+│   │
+│   └── deployment/
+│       ├── installation.md
+│       │   # Installation Guide
+│       │   # - Prerequisites
+│       │   # - Step-by-step Setup
+│       │
+│       ├── configuration.md
+│       │   # Configuration Guide
+│       │   # - Environment Setup
+│       │   # - Component Configuration
+│       │
+│       └── troubleshooting.md
+│           # Troubleshooting Guide
+│           # - Common Issues
+│           # - Solutions
+│
+├── tools/
+│   ├── setup/
+│   │   ├── install.sh
+│   │   └── configure.sh
+│   │
+│   └── scripts/
+│       ├── deploy.sh
+│       ├── test.sh
+│       └── cleanup.sh
+│
 ├── .gitignore
 ├── LICENSE
 ├── README.md

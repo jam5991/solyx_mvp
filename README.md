@@ -29,7 +29,7 @@ This repository focuses on building and iterating the Minimum Viable Product (MV
 ## Development Roadmap
 ### 🚀 MVP Prioritization for Solyx AI
 
-To ensure **Solyx AI’s MVP** delivers maximum value while remaining **lean and scalable**, we prioritize workstreams and features based on **criticality for execution, feasibility, and market impact**.
+To ensure **Solyx AI's MVP** delivers maximum value while remaining **lean and scalable**, we prioritize workstreams and features based on **criticality for execution, feasibility, and market impact**.
 
 ---
 
@@ -59,7 +59,7 @@ To ensure **Solyx AI’s MVP** delivers maximum value while remaining **lean and
 
 ### Workstream Prioritization:
 1. **(HIGH) Cluster Management & Orchestration (CMO)** – 🏆 **Top Priority**
-   - **Why?** The backbone of workload execution. If workloads can’t be placed & executed properly, the system fails.
+   - **Why?** The backbone of workload execution. If workloads can't be placed & executed properly, the system fails.
    
 2. **(MEDIUM-HIGH) Latency-Aware Workload Scheduling**
    - **Why?** AI models need **low-latency execution**, but this depends on having an established **CMO**.
@@ -169,4 +169,44 @@ To ensure **Solyx AI’s MVP** delivers maximum value while remaining **lean and
 - Terraform (for infrastructure automation)
 - Prometheus (for monitoring)
 
-### Installation
+
+### Project Structure
+```
+solyx-ai/
+├── .github/
+│   └── workflows/                    # CI/CD pipelines
+├── deploy/
+│   ├── kubernetes/                   # K8s manifests
+│   │   ├── drm/                     # Resource management deployments
+│   │   ├── cmo/                     # Cluster orchestration deployments
+│   │   └── sdn/                     # Network controller deployments
+│   ├── helm/                        # Helm charts
+│   └── terraform/                   # Infrastructure as Code
+├── docs/
+│   ├── architecture/
+│   ├── api/
+│   └── deployment/
+├── src/
+│   ├── drm/                         # Distributed Resource Manager
+│   │   ├── allocator/              # Resource allocation logic
+│   │   ├── tracker/                # Resource tracking service
+│   │   └── metrics/                # Resource metrics collection
+│   ├── cmo/                         # Cluster Management & Orchestration
+│   │   ├── scheduler/              # Workload scheduling
+│   │   ├── orchestrator/           # Cluster orchestration
+│   │   └── monitoring/             # Integration with Prometheus
+│   ├── sdn/                         # Software-Defined Networking
+│   │   ├── controller/             # Network control plane
+│   │   ├── routing/                # Traffic routing optimization
+│   │   └── metrics/                # Network metrics collection
+│   └── common/                      # Shared utilities and libraries
+├── tests/
+│   ├── unit/
+│   ├── integration/
+│   └── e2e/
+├── tools/                           # Development and deployment tools
+├── .gitignore
+├── LICENSE
+├── README.md
+└── requirements.txt
+```

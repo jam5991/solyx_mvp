@@ -1,0 +1,70 @@
+# Dependencies
+node_modules/
+vendor/
+dist/
+build/
+
+# Generated credentials
+*_password.txt
+*_credentials.txt
+*.key
+*.pem
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+.DS_Store
+*.swp
+*.swo
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Kubernetes / Tools
+kubeconfig*
+.kube/
+**/charts/*.tgz
+
+# IDE specific files
+.idea/
+.vscode/
+*.sublime-workspace
+*.sublime-project
+
+# Testing
+coverage/
+.nyc_output/
+junit.xml
+
+# Build outputs
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Operating System
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Project specific
+tools/grafana_admin_password.txt
+
+
+*.pyc
+*.pyo
+*.pyd
+*.pyw
+*.pyz
+*.pywz

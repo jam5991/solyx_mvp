@@ -68,3 +68,6 @@ tools/grafana_admin_password.txt
 *.pyw
 *.pyz
 *.pywz
+
+
+drawio/

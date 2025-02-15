@@ -48,11 +48,33 @@ for component in "${!PORTS[@]}"; do
 
     PORT=${PORTS[$component]}
 
-    # Create deployment
-    kubectl create deployment ${component} \
-        --image=nginx:alpine \
-        --namespace=${NAMESPACE} \
-        --dry-run=client -o yaml | kubectl apply -f -
+    if [ "${component}" = "drm" ]; then
+        # Special handling for DRM component
+        echo "Building DRM container..."
+        docker build -t solyx/drm:latest ./drm-core
+
+        # Load the image into kind cluster
+        echo "Loading DRM image into kind cluster..."
+        kind load docker-image solyx/drm:latest --name solyx-dev
+
+        # Create GPU provider secrets if VAST_API_KEY is set
+        if [ ! -z "${VAST_API_KEY}" ]; then
+            echo "Creating GPU provider secrets..."
+            kubectl create secret generic gpu-provider-secrets \
+                --namespace=${NAMESPACE} \
+                --from-literal=vast-api-key=${VAST_API_KEY} \
+                --dry-run=client -o yaml | kubectl apply -f -
+        fi
+
+        # Apply DRM-specific deployment
+        kubectl apply -f ./drm-core/kubernetes/drm-deployment.yaml
+    else
+        # Default handling for other components
+        kubectl create deployment ${component} \
+            --image=nginx:alpine \
+            --namespace=${NAMESPACE} \
+            --dry-run=client -o yaml | kubectl apply -f -
+    fi
 
     # Delete existing service if it exists
     kubectl delete service ${component} -n ${NAMESPACE} --ignore-not-found
@@ -69,7 +91,7 @@ spec:
     app: ${component}
   ports:
   - port: ${PORT}
-    targetPort: 80
+    targetPort: ${component == "drm" ? PORT : 80}
     protocol: TCP
   type: ClusterIP
 EOF

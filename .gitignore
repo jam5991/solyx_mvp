@@ -71,3 +71,4 @@ tools/grafana_admin_password.txt
 
 
 drawio/
+*.env

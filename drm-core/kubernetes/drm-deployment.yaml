@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: drm
+  namespace: solyx-development
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: drm
+  template:
+    metadata:
+      labels:
+        app: drm
+    spec:
+      containers:
+      - name: drm
+        image: solyx/drm:latest
+        ports:
+        - containerPort: 8081
+        env:
+        - name: VAST_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: gpu-provider-secrets
+              key: vast-api-key
+        - name: COREWEAVE_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: gpu-provider-secrets
+              key: coreweave-api-key
+        - name: LAMBDA_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: gpu-provider-secrets
+              key: lambda-api-key
+        - name: DATABASE_URL
+          value: "postgresql://user:password@postgres:5432/gpu_tracker"  # Update with your DB credentials
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8081
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8081
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        # Add other environment variables for different providers

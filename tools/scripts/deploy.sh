@@ -35,14 +35,47 @@ NAMESPACE="solyx-${ENV}"
 echo "Creating namespace ${NAMESPACE}..."
 kubectl create namespace ${NAMESPACE} --dry-run=client -o yaml | kubectl apply -f -
 
-# Create placeholder deployments for testing
-echo "Creating test deployments..."
-for component in "drm" "cmo" "sdn"; do
-    echo "Deploying ${component} test deployment..."
+# Define component configurations
+declare -A PORTS
+PORTS["drm"]=8081
+PORTS["cmo"]=8082
+PORTS["sdn"]=8083
+
+# Create deployments and services for each component
+echo "Creating deployments and services..."
+for component in "${!PORTS[@]}"; do
+    echo "Deploying ${component}..."
+
+    PORT=${PORTS[$component]}
+
+    # Create deployment
     kubectl create deployment ${component} \
         --image=nginx:alpine \
         --namespace=${NAMESPACE} \
         --dry-run=client -o yaml | kubectl apply -f -
+
+    # Delete existing service if it exists
+    kubectl delete service ${component} -n ${NAMESPACE} --ignore-not-found
+
+    # Create service with both service port and target port set to the same value
+    cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: Service
+metadata:
+  name: ${component}
+  namespace: ${NAMESPACE}
+spec:
+  selector:
+    app: ${component}
+  ports:
+  - port: ${PORT}
+    targetPort: 80
+    protocol: TCP
+  type: ClusterIP
+EOF
+
+    # Add labels to deployment for service selection
+    kubectl label deployment ${component} -n ${NAMESPACE} app=${component} --overwrite
 done
 
 # Wait for deployments to be ready
@@ -50,4 +83,16 @@ echo "Waiting for deployments to be ready..."
 kubectl wait --for=condition=available --timeout=60s deployment --all -n ${NAMESPACE}
 
 echo "Deployment complete! Component status:"
+echo -e "\nPods:"
 kubectl get pods -n ${NAMESPACE}
+echo -e "\nServices:"
+kubectl get svc -n ${NAMESPACE}
+
+echo -e "\nAccess URLs (after port-forwarding):"
+for component in "${!PORTS[@]}"; do
+    echo "${component}: http://localhost:${PORTS[$component]}"
+done
+
+echo -e "\nTo port-forward a service, use:"
+echo "kubectl port-forward -n ${NAMESPACE} svc/<service-name> <local-port>:<service-port>"
+echo "Example: kubectl port-forward -n ${NAMESPACE} svc/drm ${PORTS[drm]}:${PORTS[drm]}"

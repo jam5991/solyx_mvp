@@ -1,7 +1,7 @@
 # Solyx AI - Decentralized AI Infrastructure
 
 ## Overview
-Solyx AI is revolutionizing AI infrastructure with a decentralized, energy-efficient, and scalable approach to high-performance computing (HPC). Our MetaPod Distributed Hyperclusters leverage modular, micro data center (MDC) nodes to provide high-density AI compute without the constraints of traditional data centers. 
+Solyx AI is revolutionizing AI infrastructure with a decentralized, energy-efficient, and scalable approach to high-performance computing (HPC). Our MetaPod Distributed Hyperclusters leverage modular, micro data center (MDC) nodes to provide high-density AI compute without the constraints of traditional data centers.
 
 By integrating advanced cluster management, software-defined networking (SDN), and carbon-aware workload orchestration, Solyx AI optimizes performance, reduces costs, and enables sustainable AI compute at scale.
 
@@ -17,11 +17,11 @@ This repository focuses on building and iterating the Minimum Viable Product (MV
 1. **Cluster Management & Orchestration (CMO)**
    - Dynamic workload scheduling based on compute availability, energy efficiency, and network performance.
    - Integration with Kubernetes, Ray, and Prometheus for monitoring and workload execution.
-   
+
 2. **Distributed Resource Manager (DRM)**
    - Fine-grained tracking and allocation of compute, memory, and hardware accelerators (GPUs, TPUs, FPGAs).
    - Energy-aware migration and quota enforcement for cost and sustainability optimization.
-   
+
 3. **Software-Defined Networking (SDN) Controller**
    - Adaptive traffic engineering and congestion-aware routing.
    - Latency-optimized, high-bandwidth interconnects for AI training and inference workloads.
@@ -39,7 +39,7 @@ To ensure **Solyx AI's MVP** delivers maximum value while remaining **lean and s
 ### Workstream Prioritization:
 1. **(HIGH) Resource Allocation & Tracking** – 🏆 **Top Priority**
    - **Why?** This is the foundation of distributed compute orchestration. Without **real-time tracking**, nothing else (e.g., scheduling, optimization) can function.
-   
+
 2. **(MEDIUM-HIGH) Energy-Aware Scheduling**
    - **Why?** Renewable energy utilization is a **differentiator**, but MVP must first establish **basic scheduling** before **optimizing for energy-aware execution**.
 
@@ -47,10 +47,10 @@ To ensure **Solyx AI's MVP** delivers maximum value while remaining **lean and s
    - **Why?** Essential for scaling **multi-tenant AI workloads**, but not critical for MVP.
 
 ### Prioritized Features:
-- ✅ **(Must-Have)** Dynamic hardware allocation (CPU, GPU, TPU, FPGA)  
-- ✅ **(Must-Have)** Fine-grained resource tracking in real time  
-- 🔸 **(Nice-to-Have)** Energy price-aware job migration  
-- 🔹 **(Future)** Fair-share quota enforcement  
+- ✅ **(Must-Have)** Dynamic hardware allocation (CPU, GPU, TPU, FPGA)
+- ✅ **(Must-Have)** Fine-grained resource tracking in real time
+- 🔸 **(Nice-to-Have)** Energy price-aware job migration
+- 🔹 **(Future)** Fair-share quota enforcement
 
 ---
 
@@ -60,7 +60,7 @@ To ensure **Solyx AI's MVP** delivers maximum value while remaining **lean and s
 ### Workstream Prioritization:
 1. **(HIGH) Cluster Management & Orchestration (CMO)** – 🏆 **Top Priority**
    - **Why?** The backbone of workload execution. If workloads can't be placed & executed properly, the system fails.
-   
+
 2. **(MEDIUM-HIGH) Latency-Aware Workload Scheduling**
    - **Why?** AI models need **low-latency execution**, but this depends on having an established **CMO**.
 
@@ -68,10 +68,10 @@ To ensure **Solyx AI's MVP** delivers maximum value while remaining **lean and s
    - **Why?** Valuable for **cost savings & sustainability**, but **not an immediate MVP necessity**.
 
 ### Prioritized Features:
-- ✅ **(Must-Have)** Workload placement logic for distributed execution  
-- ✅ **(Must-Have)** AI-driven job scheduling for resource optimization  
-- 🔸 **(Nice-to-Have)** Latency-aware job migration across sites  
-- 🔹 **(Future)** Smart-grid integration for energy-aware scheduling  
+- ✅ **(Must-Have)** Workload placement logic for distributed execution
+- ✅ **(Must-Have)** AI-driven job scheduling for resource optimization
+- 🔸 **(Nice-to-Have)** Latency-aware job migration across sites
+- 🔹 **(Future)** Smart-grid integration for energy-aware scheduling
 
 ---
 
@@ -89,10 +89,10 @@ To ensure **Solyx AI's MVP** delivers maximum value while remaining **lean and s
    - **Why?** Sustainability and **power-aware networking** are valuable but **not MVP blockers**.
 
 ### Prioritized Features:
-- ✅ **(Must-Have)** AI-driven real-time network monitoring  
-- ✅ **(Must-Have)** Path optimization based on congestion & latency  
-- 🔸 **(Nice-to-Have)** Self-healing network routing  
-- 🔹 **(Future)** Renewable-energy-aware traffic steering  
+- ✅ **(Must-Have)** AI-driven real-time network monitoring
+- ✅ **(Must-Have)** Path optimization based on congestion & latency
+- 🔸 **(Nice-to-Have)** Self-healing network routing
+- 🔹 **(Future)** Renewable-energy-aware traffic steering
 
 ---
 
@@ -110,48 +110,48 @@ To ensure **Solyx AI's MVP** delivers maximum value while remaining **lean and s
    - **Why?** Critical but **secondary** to ensuring **AI workloads function**.
 
 ### Prioritized Features:
-- ✅ **(Must-Have)** Modular compute nodes with direct-to-chip cooling  
-- ✅ **(Must-Have)** AI execution capability (containerized AI workloads)  
-- 🔸 **(Nice-to-Have)** Renewable-aware job scheduling  
-- 🔹 **(Future)** AI-driven threat detection & security automation  
+- ✅ **(Must-Have)** Modular compute nodes with direct-to-chip cooling
+- ✅ **(Must-Have)** AI execution capability (containerized AI workloads)
+- 🔸 **(Nice-to-Have)** Renewable-aware job scheduling
+- 🔹 **(Future)** AI-driven threat detection & security automation
 
 ---
 
 ## 🚀 MVP Phase Breakdown Based on Priority
 ### Phase 1 (0-3 months) – Core Compute & AI Execution
-✅ **Fine-grained Resource Allocation (DRM)**  
-✅ **Basic Workload Orchestration (CMO)**  
-✅ **Basic Traffic Routing (SDN)**  
+✅ **Fine-grained Resource Allocation (DRM)**
+✅ **Basic Workload Orchestration (CMO)**
+✅ **Basic Traffic Routing (SDN)**
 ✅ **Deploy MetaPod Compute Nodes**
 
 ### Phase 2 (3-6 months) – Optimization & Scaling
-✅ **Latency-Aware Workload Scheduling**  
-✅ **Self-Healing Networking (SDN Resilience)**  
-✅ **AI-Optimized Energy Scheduling**  
+✅ **Latency-Aware Workload Scheduling**
+✅ **Self-Healing Networking (SDN Resilience)**
+✅ **AI-Optimized Energy Scheduling**
 
 ### Phase 3 (6-9 months) – Advanced Efficiency & Differentiation
-✅ **Renewable-Aware AI Execution**  
-✅ **Energy-Optimized Traffic Steering**  
-✅ **Demand-Response Scheduling**  
+✅ **Renewable-Aware AI Execution**
+✅ **Energy-Optimized Traffic Steering**
+✅ **Demand-Response Scheduling**
 
 ---
 
 ## 🔹 Summary of High-Priority MVP Workstreams
 ### 🏆 Critical for MVP:
-✔ **Resource Allocation & Tracking** (DRM)  
-✔ **Cluster Management & Orchestration** (CMO)  
-✔ **Dynamic Traffic Routing** (SDN)  
+✔ **Resource Allocation & Tracking** (DRM)
+✔ **Cluster Management & Orchestration** (CMO)
+✔ **Dynamic Traffic Routing** (SDN)
 ✔ **MetaPod Compute Nodes**
 
 ### 🔥 Medium Priority (Phase 2-3):
-✔ **Latency-Aware Scheduling**  
-✔ **Energy-Aware AI Workload Migration**  
-✔ **Self-Healing Traffic Engineering**  
+✔ **Latency-Aware Scheduling**
+✔ **Energy-Aware AI Workload Migration**
+✔ **Self-Healing Traffic Engineering**
 
 ### 📌 Future Enhancements (Post-MVP):
-✔ **Demand-Response Scheduling**  
-✔ **Renewable-Aware Routing**  
-✔ **AI-Driven Security Automation**  
+✔ **Demand-Response Scheduling**
+✔ **Renewable-Aware Routing**
+✔ **AI-Driven Security Automation**
 
 ---
 
@@ -194,7 +194,7 @@ solyx-ai/
 │          # - on:
 │          #   push:
 │          #     branches: [main, dev]
-│        
+│
 │
 ├── deploy/
 │   ├── kubernetes/
@@ -698,10 +698,13 @@ solyx-ai/
 ├── tools/
 │   ├── setup/
 │   │   ├── install.sh
+│   │   ├── create_dirs.sh
+│   │   ├── uninstall.sh
 │   │   └── configure.sh
 │   │
 │   └── scripts/
 │       ├── deploy.sh
+│       ├── dev-setup.sh
 │       ├── test.sh
 │       └── cleanup.sh
 │

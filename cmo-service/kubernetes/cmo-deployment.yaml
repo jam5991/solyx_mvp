@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cmo-service
+  namespace: solyx-development
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cmo-service
+  template:
+    metadata:
+      labels:
+        app: cmo-service
+    spec:
+      containers:
+      - name: cmo-service
+        image: solyx/cmo-service:latest
+        ports:
+        - containerPort: 8000
+        env:
+        - name: PORT
+          value: "8000"
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: db-credentials
+              key: url
+        # Add provider keys from DRM Core
+        envFrom:
+        - secretRef:
+            name: gpu-provider-secrets
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 10 

@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "Deploying Solyx AI core components..."
+echo "Deploying Solyx AI components..."
 
 # Check if kubectl is installed
 if ! command -v kubectl &> /dev/null; then
@@ -37,9 +37,31 @@ kubectl create namespace ${NAMESPACE} --dry-run=client -o yaml | kubectl apply -
 
 # Define component configurations
 declare -A PORTS
-PORTS["drm"]=8081
+PORTS["drm"]=8000
 PORTS["cmo"]=8082
 PORTS["sdn"]=8083
+
+# Build and deploy DRM Core
+echo "Building DRM Core..."
+docker build -t solyx/drm-core:latest ./drm-core
+docker push solyx/drm-core:latest  # If using a registry
+
+# Build and deploy CMO Service
+echo "Building CMO Service..."
+docker build -t solyx/cmo-service:latest ./cmo-service
+docker push solyx/cmo-service:latest  # If using a registry
+
+# Create secrets
+echo "Creating secrets..."
+kubectl create secret generic gpu-provider-secrets \
+    --namespace=${NAMESPACE} \
+    --from-file=./drm-core/config.env \
+    --dry-run=client -o yaml | kubectl apply -f -
+
+kubectl create secret generic db-credentials \
+    --namespace=${NAMESPACE} \
+    --from-file=./cmo-service/config.env \
+    --dry-run=client -o yaml | kubectl apply -f -
 
 # Create deployments and services for each component
 echo "Creating deployments and services..."
@@ -57,15 +79,6 @@ for component in "${!PORTS[@]}"; do
         echo "Loading DRM image into kind cluster..."
         kind load docker-image solyx/drm:latest --name solyx-dev
 
-        # Create GPU provider secrets if VAST_API_KEY is set
-        if [ ! -z "${VAST_API_KEY}" ]; then
-            echo "Creating GPU provider secrets..."
-            kubectl create secret generic gpu-provider-secrets \
-                --namespace=${NAMESPACE} \
-                --from-literal=vast-api-key=${VAST_API_KEY} \
-                --dry-run=client -o yaml | kubectl apply -f -
-        fi
-
         # Apply DRM-specific deployment
         kubectl apply -f ./drm-core/kubernetes/drm-deployment.yaml
     else
@@ -76,10 +89,7 @@ for component in "${!PORTS[@]}"; do
             --dry-run=client -o yaml | kubectl apply -f -
     fi
 
-    # Delete existing service if it exists
-    kubectl delete service ${component} -n ${NAMESPACE} --ignore-not-found
-
-    # Create service with both service port and target port set to the same value
+    # Create service
     cat <<EOF | kubectl apply -f -
 apiVersion: v1
 kind: Service
@@ -99,6 +109,10 @@ EOF
     # Add labels to deployment for service selection
     kubectl label deployment ${component} -n ${NAMESPACE} app=${component} --overwrite
 done
+
+# Apply deployments
+echo "Applying deployments..."
+kubectl apply -f ./cmo-service/kubernetes/cmo-deployment.yaml
 
 # Wait for deployments to be ready
 echo "Waiting for deployments to be ready..."

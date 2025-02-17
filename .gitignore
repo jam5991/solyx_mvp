@@ -72,3 +72,9 @@ tools/grafana_admin_password.txt
 
 drawio/
 *.env
+
+# Python package build
+*.egg-info/
+*.egg
+dist/
+build/

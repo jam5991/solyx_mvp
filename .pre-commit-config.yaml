@@ -5,3 +5,9 @@ repos:
         name: check whitespace
         entry: git diff --check
         language: system
+        
+    -   id: black
+        name: black
+        entry: black
+        language: system
+        types: [python]

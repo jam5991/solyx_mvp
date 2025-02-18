@@ -1,15 +1,21 @@
 #!/usr/bin/env python3
-import os
-from pathlib import Path
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from drm_core.database.models import Base, GPUInstance, GPUAllocation, GPUEnergyUsage
 import argparse
 import logging
+from pathlib import Path
+
+from drm_core.database.models import (
+    Base,
+    GPUAllocation,
+    GPUEnergyUsage,
+    GPUInstance,
+)
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
 
 def clear_job_activity(db_path: Path, clear_all: bool = False):
     """Clear job activity from the database"""
@@ -62,6 +68,7 @@ def clear_job_activity(db_path: Path, clear_all: bool = False):
     finally:
         session.close()
 
+
 def reset_database(db_path: Path):
     """Reset database to initial state"""
     if db_path.exists():
@@ -75,17 +82,24 @@ def reset_database(db_path: Path):
     else:
         logger.error(f"Database not found at: {db_path}")
 
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Manage DRM Core job activity")
-    parser.add_argument('--action', choices=['clear', 'clear-all', 'reset'], 
-                       required=True, help='Action to perform')
+    parser = argparse.ArgumentParser(
+        description="Manage DRM Core job activity"
+    )
+    parser.add_argument(
+        "--action",
+        choices=["clear", "clear-all", "reset"],
+        required=True,
+        help="Action to perform",
+    )
     args = parser.parse_args()
 
     db_path = Path(__file__).parent.parent.parent / "test_gpu_tracker.db"
-    
-    if args.action == 'clear':
+
+    if args.action == "clear":
         clear_job_activity(db_path, clear_all=False)
-    elif args.action == 'clear-all':
+    elif args.action == "clear-all":
         clear_job_activity(db_path, clear_all=True)
-    elif args.action == 'reset':
-        reset_database(db_path) 
+    elif args.action == "reset":
+        reset_database(db_path)

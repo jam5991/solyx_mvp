@@ -77,4 +77,4 @@ When contributing to the project:
 For workflow modifications:
 1. Test changes in a fork first
 2. Ensure secrets and permissions are properly configured
-3. Update this README when adding new workflows 
+3. Update this README when adding new workflows

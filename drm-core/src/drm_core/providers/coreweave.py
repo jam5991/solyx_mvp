@@ -1,10 +1,12 @@
-from ..base import CloudGPUProvider
-import aiohttp
 import logging
 from typing import List
-from ..models import GPUInstance
+
+import aiohttp
+from base import CloudGPUProvider
+from models import GPUInstance
 
 logger = logging.getLogger(__name__)
+
 
 class CoreWeaveProvider(CloudGPUProvider):
     def __init__(self, api_key: str):

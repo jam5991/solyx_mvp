@@ -10,4 +10,4 @@ alembic>=1.7.0
 psycopg2-binary>=2.9.0
 
 # DRM Core Dependency
-drm-core>=0.1.0 
+drm-core>=0.1.0

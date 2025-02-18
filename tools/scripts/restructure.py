@@ -3,8 +3,10 @@ import os
 import shutil
 from pathlib import Path
 
+
 def ensure_dir(path):
     Path(path).mkdir(parents=True, exist_ok=True)
+
 
 def move_file(src, dst):
     if os.path.exists(src):
@@ -14,30 +16,32 @@ def move_file(src, dst):
     else:
         print(f"Warning: Source file not found: {src}")
 
+
 def update_imports(file_path):
     """Update imports in the specified file"""
     if not os.path.exists(file_path):
         print(f"Warning: Cannot update imports, file not found: {file_path}")
         return
 
-    with open(file_path, 'r') as f:
+    with open(file_path, "r") as f:
         content = f.read()
 
     # Update imports to use drm_core package
     updates = {
-        'from ..providers': 'from drm_core.providers',
-        'from ..scheduler': 'from drm_core.scheduler',
-        'from ..energy': 'from drm_core.energy',
-        'from ..monitoring': 'from drm_core.monitoring',
-        'from ..database': 'from drm_core.database',
+        "from ..providers": "from drm_core.providers",
+        "from ..scheduler": "from drm_core.scheduler",
+        "from ..energy": "from drm_core.energy",
+        "from ..monitoring": "from drm_core.monitoring",
+        "from ..database": "from drm_core.database",
     }
 
     for old, new in updates.items():
         content = content.replace(old, new)
 
-    with open(file_path, 'w') as f:
+    with open(file_path, "w") as f:
         f.write(content)
     print(f"Updated imports in: {file_path}")
+
 
 def main():
     # Project root directory
@@ -46,14 +50,16 @@ def main():
     # Files to move to CMO service
     moves = [
         ("drm-core/src/main.py", "cmo-service/src/main.py"),
-        ("drm-core/kubernetes/drm-deployment.yaml", 
-         "cmo-service/kubernetes/cmo-deployment.yaml"),
+        (
+            "drm-core/kubernetes/drm-deployment.yaml",
+            "cmo-service/kubernetes/cmo-deployment.yaml",
+        ),
         ("drm-core/src/check_env.py", "cmo-service/src/check_env.py"),
         ("drm-core/src/load_env.py", "cmo-service/src/load_env.py"),
     ]
 
     print("Starting restructure process...")
-    
+
     # Execute moves
     for src, dst in moves:
         move_file(str(root / src), str(root / dst))
@@ -70,7 +76,7 @@ def main():
 
     print("\nRestructure complete!")
     print("\nVerifying directory structure...")
-    
+
     # Verify directories exist
     expected_dirs = [
         "drm-core/src/providers",
@@ -89,5 +95,6 @@ def main():
         else:
             print(f"Verified: {dir_path}")
 
+
 if __name__ == "__main__":
-    main() 
+    main()

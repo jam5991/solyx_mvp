@@ -1,10 +1,12 @@
-import psutil
+import asyncio
 import logging
 from datetime import datetime
-from typing import Dict, Any
-import asyncio
+from typing import Any, Dict
+
+import psutil
 
 logger = logging.getLogger(__name__)
+
 
 class ResourceMonitor:
     def __init__(self, update_interval: int = 60):
@@ -35,9 +37,9 @@ class ResourceMonitor:
             "system": {
                 "cpu_percent": psutil.cpu_percent(),
                 "memory_percent": psutil.virtual_memory().percent,
-                "disk_usage": psutil.disk_usage('/').percent
+                "disk_usage": psutil.disk_usage("/").percent,
             },
-            "gpus": await self._collect_gpu_metrics()
+            "gpus": await self._collect_gpu_metrics(),
         }
         return metrics
 
@@ -45,23 +47,24 @@ class ResourceMonitor:
         """Collect GPU-specific metrics"""
         try:
             import pynvml
+
             pynvml.nvmlInit()
             gpu_metrics = {}
-            
+
             device_count = pynvml.nvmlDeviceGetCount()
             for i in range(device_count):
                 handle = pynvml.nvmlDeviceGetHandleByIndex(i)
                 info = pynvml.nvmlDeviceGetMemoryInfo(handle)
                 utilization = pynvml.nvmlDeviceGetUtilizationRates(handle)
-                
+
                 gpu_metrics[f"gpu_{i}"] = {
                     "memory_total": info.total,
                     "memory_used": info.used,
                     "memory_free": info.free,
                     "gpu_utilization": utilization.gpu,
-                    "memory_utilization": utilization.memory
+                    "memory_utilization": utilization.memory,
                 }
-            
+
             return gpu_metrics
         except Exception as e:
             logger.error(f"Error collecting GPU metrics: {e}")
@@ -69,4 +72,4 @@ class ResourceMonitor:
 
     def get_current_metrics(self) -> Dict[str, Any]:
         """Get the most recent metrics"""
-        return self.metrics 
+        return self.metrics

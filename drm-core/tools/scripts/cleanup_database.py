@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 import logging
 from pathlib import Path
-from sqlalchemy import create_engine, text
+
 from drm_core.models import Base
+from sqlalchemy import create_engine, text
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
 
 def cleanup_database():
     """Remove unused tables and update schema"""
@@ -23,9 +25,13 @@ def cleanup_database():
     try:
         # Drop the gpu_energy_usage table if it exists
         with engine.connect() as conn:
-            conn.execute(text("""
+            conn.execute(
+                text(
+                    """
                 DROP TABLE IF EXISTS gpu_energy_usage
-            """))
+            """
+                )
+            )
             conn.commit()
             logger.info("Removed gpu_energy_usage table if it existed")
 
@@ -36,5 +42,6 @@ def cleanup_database():
     except Exception as e:
         logger.error(f"Error during cleanup: {e}")
 
+
 if __name__ == "__main__":
-    cleanup_database() 
+    cleanup_database()

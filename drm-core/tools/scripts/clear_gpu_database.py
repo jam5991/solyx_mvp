@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-import os
 from pathlib import Path
+
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
@@ -10,6 +10,7 @@ ROOT_DIR = Path(__file__).parent.parent.parent
 # Database setup - use the same test database
 DB_PATH = ROOT_DIR / "gpu_tracker.db"  # Changed from gpu_tracker.db
 DATABASE_URL = f"sqlite:///{DB_PATH}"
+
 
 def clear_database():
     # Create engine and session
@@ -29,10 +30,13 @@ def clear_database():
     finally:
         session.close()
 
+
 if __name__ == "__main__":
     # Ask for confirmation
-    response = input("Are you sure you want to clear the database? This cannot be undone! (y/N): ")
-    if response.lower() == 'y':
+    confirmation = input(
+        "Are you sure you want to clear the database? This cannot be undone! (y/N): "
+    )
+    if confirmation.lower() == "y":
         clear_database()
     else:
-        print("Operation cancelled.") 
+        print("Operation cancelled.")

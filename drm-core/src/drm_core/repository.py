@@ -1,28 +1,27 @@
-from sqlalchemy.orm import Session
-from datetime import datetime
-from typing import List, Optional, Dict
-from .models import GPUInstance, GPUAllocation
 import logging
+from datetime import datetime
+from typing import Dict, List, Optional
+
+from models import GPUAllocation, GPUInstance
+from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
 
 
 class GPURepository:
     """Tracks GPU resources and their states"""
+
     def __init__(self, session: Session):
         self.session = session
-    
+
     def track_gpu(self, gpu: GPUInstance):
         """Store GPU instance and its current state"""
-        pass
-        
+
     def update_gpu_status(self, instance_id: str, status: str):
         """Update GPU status (available, allocated, etc)"""
-        pass
-        
+
     def get_available_gpus(self) -> List[GPUInstance]:
         """Get list of available GPUs"""
-        pass
 
     def create_gpu_instance(
         self,
@@ -48,7 +47,9 @@ class GPURepository:
         self.session.refresh(gpu)
         return gpu
 
-    def update_gpu_price(self, instance_id: str, new_price: float) -> GPUInstance:
+    def update_gpu_price(
+        self, instance_id: str, new_price: float
+    ) -> GPUInstance:
         gpu = (
             self.session.query(GPUInstance)
             .filter(GPUInstance.instance_id == instance_id)
@@ -61,13 +62,15 @@ class GPURepository:
             self.session.refresh(gpu)
         return gpu
 
-    def allocate_gpu(self, instance_id: str, job_id: str) -> Optional[GPUAllocation]:
+    def allocate_gpu(
+        self, instance_id: str, job_id: str
+    ) -> Optional[GPUAllocation]:
         """Allocate a GPU for a job"""
         gpu = (
             self.session.query(GPUInstance)
             .filter(
                 GPUInstance.instance_id == instance_id,
-                GPUInstance.available == True
+                GPUInstance.available == True,
             )
             .first()
         )
@@ -91,21 +94,25 @@ class GPURepository:
         """Release GPU allocation for a given job"""
         try:
             # Find the allocation
-            allocation = self.session.query(GPUAllocation)\
-                .filter(GPUAllocation.job_id == job_id)\
+            allocation = (
+                self.session.query(GPUAllocation)
+                .filter(GPUAllocation.job_id == job_id)
                 .first()
-            
+            )
+
             if allocation:
                 # Update the allocation's released_at timestamp
                 allocation.released_at = datetime.utcnow()
-                
+
                 # Mark the GPU as available again
-                gpu = self.session.query(GPUInstance)\
-                    .filter(GPUInstance.id == allocation.gpu_instance_id)\
+                gpu = (
+                    self.session.query(GPUInstance)
+                    .filter(GPUInstance.id == allocation.gpu_instance_id)
                     .first()
+                )
                 if gpu:
                     gpu.available = True
-                
+
                 self.session.commit()
                 return True
             return False
@@ -150,7 +157,9 @@ class GPURepository:
             .all()
         )
 
-        total_energy_kwh = sum(a.total_energy_consumed_kwh or 0 for a in allocations)
+        total_energy_kwh = sum(
+            a.total_energy_consumed_kwh or 0 for a in allocations
+        )
         total_cost_usd = sum(a.total_energy_cost_usd or 0 for a in allocations)
 
         return {
@@ -182,7 +191,9 @@ class GPURepository:
                 total_energy = sum(
                     a.total_energy_consumed_kwh or 0 for a in allocations
                 )
-                total_cost = sum(a.total_energy_cost_usd or 0 for a in allocations)
+                total_cost = sum(
+                    a.total_energy_cost_usd or 0 for a in allocations
+                )
                 avg_power = sum(
                     a.average_power_consumption_watts or 0 for a in allocations
                 ) / len(allocations)
@@ -217,10 +228,11 @@ class GPURepository:
 
     def add_gpu_instance(self, gpu: GPUInstance) -> GPUInstance:
         """Add a new GPU instance or update existing one"""
-        existing = self.session.query(GPUInstance).filter_by(
-            provider=gpu.provider,
-            instance_id=gpu.instance_id
-        ).first()
+        existing = (
+            self.session.query(GPUInstance)
+            .filter_by(provider=gpu.provider, instance_id=gpu.instance_id)
+            .first()
+        )
 
         if existing:
             # Update existing instance
@@ -240,7 +252,11 @@ class GPURepository:
 
     def get_gpu_allocations(self, gpu_id: int) -> List[GPUAllocation]:
         """Get allocation history for a GPU"""
-        return self.session.query(GPUAllocation).filter_by(gpu_instance_id=gpu_id).all()
+        return (
+            self.session.query(GPUAllocation)
+            .filter_by(gpu_instance_id=gpu_id)
+            .all()
+        )
 
     def add_gpu_allocation(self, allocation: GPUAllocation) -> GPUAllocation:
         """Add a new GPU allocation"""
@@ -250,4 +266,6 @@ class GPURepository:
 
     def get_allocation_by_job_id(self, job_id: str) -> Optional[GPUAllocation]:
         """Get allocation by job ID"""
-        return self.session.query(GPUAllocation).filter_by(job_id=job_id).first()
+        return (
+            self.session.query(GPUAllocation).filter_by(job_id=job_id).first()
+        )

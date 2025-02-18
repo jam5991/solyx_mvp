@@ -1,7 +1,16 @@
-from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, ForeignKey
+from datetime import datetime
+
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
-from datetime import datetime
 
 Base = declarative_base()
 
@@ -26,19 +35,24 @@ class GPUInstance(Base):
     def to_dict(self) -> dict:
         """Convert GPU instance to dictionary"""
         return {
-            'id': self.id,
-            'provider': self.provider,
-            'instance_id': self.instance_id,
-            'gpu_type': self.gpu_type,
-            'memory_gb': self.memory_gb,
-            'price_per_hour': self.price_per_hour,
-            'region': self.region,
-            'available': self.available,
-            'last_updated': self.last_updated.isoformat() if self.last_updated else None
+            "id": self.id,
+            "provider": self.provider,
+            "instance_id": self.instance_id,
+            "gpu_type": self.gpu_type,
+            "memory_gb": self.memory_gb,
+            "price_per_hour": self.price_per_hour,
+            "region": self.region,
+            "available": self.available,
+            "last_updated": self.last_updated.isoformat()
+            if self.last_updated
+            else None,
         }
 
     def __repr__(self):
-        return f"<GPUInstance(provider='{self.provider}', type='{self.gpu_type}', id='{self.instance_id}')>"
+        return (
+            f"<GPUInstance(provider='{self.provider}', "
+            f"type='{self.gpu_type}', id='{self.instance_id}')>"
+        )
 
 
 class GPUAllocation(Base):
@@ -60,4 +74,7 @@ class GPUAllocation(Base):
     gpu_instance = relationship("GPUInstance", back_populates="allocations")
 
     def __repr__(self):
-        return f"<GPUAllocation(job_id='{self.job_id}', allocated_at='{self.allocated_at}')>"
+        return (
+            f"<GPUAllocation(job_id='{self.job_id}', "
+            f"allocated_at='{self.allocated_at}')>"
+        )

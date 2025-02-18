@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 import logging
+from datetime import datetime
 from pathlib import Path
+
+from drm_core.models import GPUAllocation, GPUInstance
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from drm_core.models import Base, GPUInstance, GPUAllocation
-from datetime import datetime
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
 
 def create_test_allocation():
     """Create a test job allocation for an existing GPU"""
@@ -23,7 +25,7 @@ def create_test_allocation():
     try:
         # Get first available GPU
         gpu = session.query(GPUInstance).filter_by(available=True).first()
-        
+
         if not gpu:
             logger.error("No available GPUs found in database!")
             return
@@ -39,20 +41,22 @@ def create_test_allocation():
             price_at_allocation=gpu.price_per_hour,  # Use current GPU price
             total_energy_consumed_kwh=0.0,
             total_energy_cost_usd=0.0,
-            average_power_consumption_watts=0.0
+            average_power_consumption_watts=0.0,
         )
 
         session.add(allocation)
         session.commit()
 
-        logger.info(f"""
+        logger.info(
+            f"""
 Created test allocation:
 - Job ID: {allocation.job_id}
 - GPU: {gpu.gpu_type}
 - GPU Instance ID: {gpu.instance_id}
 - Price at allocation: ${allocation.price_at_allocation}/hr
 - Allocated at: {allocation.allocated_at}
-""")
+"""
+        )
 
     except Exception as e:
         logger.error(f"Error creating test allocation: {e}")
@@ -60,5 +64,6 @@ Created test allocation:
     finally:
         session.close()
 
+
 if __name__ == "__main__":
-    create_test_allocation() 
+    create_test_allocation()

@@ -1,6 +1,8 @@
-import pytest
 from unittest.mock import AsyncMock, patch
+
+import pytest
 from drm_core.models import GPUInstance
+
 
 @pytest.fixture
 def mock_providers():
@@ -13,22 +15,22 @@ def mock_providers():
             memory_gb=80,
             price_per_hour=2.5,
             region="test-region",
-            available=True
+            available=True,
         )
     ]
 
     mock_vast = AsyncMock()
     mock_lambda = AsyncMock()
-    
+
     mock_vast.list_available_gpus = AsyncMock(return_value=sample_gpus)
     mock_lambda.list_available_gpus = AsyncMock(return_value=sample_gpus)
-    
-    with patch('drm_core.main.VastAIProvider', return_value=mock_vast):
-        with patch('drm_core.main.LambdaLabsProvider', return_value=mock_lambda):
-            yield {
-                'vast': mock_vast,
-                'lambda': mock_lambda
-            }
+
+    with patch("drm_core.main.VastAIProvider", return_value=mock_vast):
+        with patch(
+            "drm_core.main.LambdaLabsProvider", return_value=mock_lambda
+        ):
+            yield {"vast": mock_vast, "lambda": mock_lambda}
+
 
 @pytest.mark.asyncio
 async def test_provider_initialization(drm_core, mock_providers):
@@ -36,15 +38,18 @@ async def test_provider_initialization(drm_core, mock_providers):
     gpus = await drm_core.initialize_providers()
     assert isinstance(gpus, list)
     assert len(gpus) == 2  # One from each provider
-    
-    mock_providers['vast'].list_available_gpus.assert_called_once()
-    mock_providers['lambda'].list_available_gpus.assert_called_once()
+
+    mock_providers["vast"].list_available_gpus.assert_called_once()
+    mock_providers["lambda"].list_available_gpus.assert_called_once()
+
 
 @pytest.mark.asyncio
 async def test_provider_error_handling(drm_core, mock_providers):
     """Test provider error handling"""
-    mock_providers['vast'].list_available_gpus.side_effect = Exception("API Error")
-    
+    mock_providers["vast"].list_available_gpus.side_effect = Exception(
+        "API Error"
+    )
+
     gpus = await drm_core.initialize_providers()
     assert isinstance(gpus, list)
-    assert len(gpus) == 1  # Only Lambda provider succeeded 
+    assert len(gpus) == 1  # Only Lambda provider succeeded

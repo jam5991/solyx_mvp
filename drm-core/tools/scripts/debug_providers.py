@@ -2,9 +2,11 @@
 import asyncio
 import os
 from pathlib import Path
+
 from dotenv import load_dotenv
-from drm_core.providers.vastai import VastAIProvider
 from drm_core.providers.lambdalabs import LambdaLabsProvider
+from drm_core.providers.vastai import VastAIProvider
+
 
 async def debug_vast():
     print("\n=== Debugging Vast.ai Provider ===")
@@ -12,7 +14,7 @@ async def debug_vast():
     if not vast_key:
         print("❌ No VAST_API_KEY found")
         return
-        
+
     provider = VastAIProvider(vast_key)
     try:
         print("📡 Querying Vast.ai...")
@@ -29,13 +31,14 @@ async def debug_vast():
     except Exception as e:
         print(f"❌ Error: {str(e)}")
 
+
 async def debug_lambda():
     print("\n=== Debugging Lambda Labs Provider ===")
     lambda_key = os.getenv("LAMBDA_API_KEY")
     if not lambda_key:
         print("❌ No LAMBDA_API_KEY found")
         return
-        
+
     provider = LambdaLabsProvider(lambda_key)
     try:
         print("📡 Querying Lambda Labs...")
@@ -52,13 +55,15 @@ async def debug_lambda():
     except Exception as e:
         print(f"❌ Error: {str(e)}")
 
+
 async def main():
     # Load environment variables
-    env_path = Path(__file__).parent.parent.parent / 'config.env'
+    env_path = Path(__file__).parent.parent.parent / "config.env"
     load_dotenv(dotenv_path=env_path)
-    
+
     await debug_vast()
     await debug_lambda()
 
+
 if __name__ == "__main__":
-    asyncio.run(main()) 
+    asyncio.run(main())

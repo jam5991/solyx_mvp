@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
-import os
+import logging
 from pathlib import Path
+import json
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-import json
-from drm_core.database.models import Base, GPUInstance
 from tabulate import tabulate
-import logging
+from drm_core.models import Base, GPUInstance
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -20,8 +19,8 @@ def init_database(engine):
 
 def view_stored_gpus():
     """View all GPUs stored in the database"""
-    # Use the same database path as test_drm_core.py
-    db_path = Path(__file__).parent.parent.parent / "test_gpu_tracker.db"
+    # Use the same database as main.py
+    db_path = Path.cwd() / "gpu_tracker.db"
     logger.info(f"Using database at: {db_path.absolute()}")
 
     if not db_path.exists():
@@ -42,8 +41,8 @@ def view_stored_gpus():
         
         if not gpus:
             logger.warning("\n⚠️  No GPUs found in database!")
-            logger.info("Try running the integration test:")
-            logger.info("USE_REAL_PROVIDERS=true python -m pytest tests/test_drm_core.py -v")
+            logger.info("Try running main.py first to sync GPUs:")
+            logger.info("python -m drm_core.main")
             return
 
         # Prepare data for tabulation
@@ -62,11 +61,11 @@ def view_stored_gpus():
                 f"${gpu.price_per_hour:.2f}/hr",
                 region,
                 "✅" if gpu.available else "❌",
-                gpu.created_at.strftime("%Y-%m-%d %H:%M:%S")
+                gpu.last_updated.strftime("%Y-%m-%d %H:%M:%S")
             ])
 
         # Print table
-        headers = ["Instance ID", "Provider", "GPU Type", "Memory", "Price", "Region", "Available", "Created At"]
+        headers = ["Instance ID", "Provider", "GPU Type", "Memory", "Price", "Region", "Available", "Last Updated"]
         print("\n🖥️  Stored GPU Instances:")
         print(tabulate(gpu_data, headers=headers, tablefmt="pretty"))
         

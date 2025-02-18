@@ -34,13 +34,7 @@ class VastAIProvider(CloudGPUProvider):
                                         memory_gb=instance["gpu_ram"] / 1024,  # Convert to GB
                                         price_per_hour=instance["dph_total"],
                                         region=instance["geolocation"],
-                                        available=instance["actual_status"] == "running",
-                                        cuda_version=str(instance.get("cuda_max_good", "")),
-                                        reliability=float(instance.get("reliability2", 0.0)),
-                                        performance_score=float(instance.get("dlperf", 0.0)),
-                                        network_up=float(instance.get("inet_up", 0.0)),
-                                        network_down=float(instance.get("inet_down", 0.0)),
-                                        verified=instance.get("verification", "") == "verified"
+                                        available=instance["actual_status"] == "running"
                                     )
                                 )
                                 logger.info(f"Added instance: {instance['id']} - {instance['gpu_name']}")

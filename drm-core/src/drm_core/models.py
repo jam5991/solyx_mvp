@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, ForeignKey
-from sqlalchemy.orm import declarative_base
+from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from datetime import datetime
 
@@ -10,21 +10,35 @@ class GPUInstance(Base):
     __tablename__ = "gpu_instances"
 
     id = Column(Integer, primary_key=True)
-    provider = Column(String, nullable=False)  # vast.ai, coreweave, etc.
-    instance_id = Column(String, nullable=False)
-    gpu_type = Column(String, nullable=False)  # A100, V100, etc.
-    memory_gb = Column(Integer, nullable=False)
-    price_per_hour = Column(Float, nullable=False)
-    region = Column(String, nullable=False)
+    provider = Column(String)
+    instance_id = Column(String)
+    gpu_type = Column(String)
+    memory_gb = Column(Float)
+    price_per_hour = Column(Float)
+    region = Column(String)
     available = Column(Boolean, default=True)
-    energy_cost_kwh = Column(Float)  # Energy cost in the region
-    last_updated = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    energy_cost_kwh = Column(Float, default=0.12)
+    last_updated = Column(DateTime, default=datetime.utcnow)
 
     # Relationship with allocation history
     allocations = relationship("GPUAllocation", back_populates="gpu_instance")
 
+    def to_dict(self) -> dict:
+        """Convert GPU instance to dictionary"""
+        return {
+            'id': self.id,
+            'provider': self.provider,
+            'instance_id': self.instance_id,
+            'gpu_type': self.gpu_type,
+            'memory_gb': self.memory_gb,
+            'price_per_hour': self.price_per_hour,
+            'region': self.region,
+            'available': self.available,
+            'last_updated': self.last_updated.isoformat() if self.last_updated else None
+        }
+
     def __repr__(self):
-        return f"<GPUInstance(provider='{self.provider}', gpu_type='{self.gpu_type}')>"
+        return f"<GPUInstance(provider='{self.provider}', type='{self.gpu_type}', id='{self.instance_id}')>"
 
 
 class GPUAllocation(Base):
@@ -32,31 +46,18 @@ class GPUAllocation(Base):
 
     id = Column(Integer, primary_key=True)
     gpu_instance_id = Column(Integer, ForeignKey("gpu_instances.id"))
-    job_id = Column(String, nullable=False)
+    job_id = Column(String)
     allocated_at = Column(DateTime, default=datetime.utcnow)
     released_at = Column(DateTime, nullable=True)
-    price_at_allocation = Column(Float, nullable=False)
+    price_at_allocation = Column(Float)
 
-    # Add energy tracking fields
-    total_energy_consumed_kwh = Column(Float, nullable=True)
-    total_energy_cost_usd = Column(Float, nullable=True)
-    average_power_consumption_watts = Column(Float, nullable=True)
+    # Energy tracking fields
+    total_energy_consumed_kwh = Column(Float, default=0.0)
+    total_energy_cost_usd = Column(Float, default=0.0)
+    average_power_consumption_watts = Column(Float, default=0.0)
 
     # Relationship with GPU instance
     gpu_instance = relationship("GPUInstance", back_populates="allocations")
 
     def __repr__(self):
         return f"<GPUAllocation(job_id='{self.job_id}', allocated_at='{self.allocated_at}')>"
-
-
-class GPUEnergyUsage(Base):
-    __tablename__ = "gpu_energy_usage"
-
-    id = Column(Integer, primary_key=True)
-    gpu_instance_id = Column(Integer, ForeignKey("gpu_instances.id"))
-    allocation_id = Column(Integer, ForeignKey("gpu_allocations.id"))
-    timestamp = Column(DateTime, default=datetime.utcnow)
-    power_consumption_watts = Column(Float)
-    energy_consumed_kwh = Column(Float)
-    energy_cost_usd = Column(Float)
-    energy_rate_kwh = Column(Float)

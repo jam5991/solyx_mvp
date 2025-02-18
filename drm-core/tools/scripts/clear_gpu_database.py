@@ -8,7 +8,7 @@ from sqlalchemy.orm import sessionmaker
 ROOT_DIR = Path(__file__).parent.parent.parent
 
 # Database setup - use the same test database
-DB_PATH = ROOT_DIR / "test_gpu_tracker.db"  # Changed from gpu_tracker.db
+DB_PATH = ROOT_DIR / "gpu_tracker.db"  # Changed from gpu_tracker.db
 DATABASE_URL = f"sqlite:///{DB_PATH}"
 
 def clear_database():

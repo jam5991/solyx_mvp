@@ -261,3 +261,34 @@ class GPURepository:
         return (
             self.session.query(GPUAllocation).filter_by(job_id=job_id).first()
         )
+
+    def add_or_update_gpu(self, gpu: GPUInstance) -> None:
+        """Add or update a GPU instance in the database"""
+        try:
+            # Try to find existing GPU by instance_id
+            existing = (
+                self.session.query(GPUInstance)
+                .filter(GPUInstance.instance_id == gpu.instance_id)
+                .first()
+            )
+
+            if existing:
+                # Update existing GPU
+                existing.gpu_type = gpu.gpu_type
+                existing.memory_gb = gpu.memory_gb
+                existing.price_per_hour = gpu.price_per_hour
+                existing.region = gpu.region
+                existing.available = gpu.available
+                existing.status = gpu.status
+                logger.info(f"Updated GPU {gpu.instance_id} in database")
+            else:
+                # Add new GPU
+                self.session.add(gpu)
+                logger.info(f"Added new GPU {gpu.instance_id} to database")
+
+            self.session.commit()
+
+        except Exception as e:
+            self.session.rollback()
+            logger.error(f"Error adding/updating GPU {gpu.instance_id}: {e}")
+            raise

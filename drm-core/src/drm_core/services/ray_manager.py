@@ -20,10 +20,18 @@ class RayJobExecutor:
         try:
             import importlib
 
+            # Import the module and get the function
             module = importlib.import_module(job_spec["workload"]["script"])
             train_fn = getattr(module, job_spec["workload"]["function"])
 
-            result = train_fn(**job_spec["workload"])
+            # Extract only the function arguments from workload
+            workload = job_spec["workload"].copy()
+            # Remove the module and function names from args
+            workload.pop("script")
+            workload.pop("function")
+
+            # Call the function with the remaining arguments
+            result = train_fn(**workload)
             return {"status": "completed", "result": result}
         except Exception as e:
             logger.error(f"Job execution failed: {e}")

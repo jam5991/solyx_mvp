@@ -68,14 +68,15 @@ tools/grafana_admin_password.txt
 *.pyw
 *.pyz
 *.pywz
-
-
+*.npy
+*.csv
 drawio/
 *.env
-
+*.csv
 # Python package build
 *.egg-info/
 *.egg
 dist/
 build/
 *.db # database file
+*.csv

@@ -39,7 +39,10 @@ class DRMCore:
         """Initialize DRM Core in the correct sequence"""
         logger.info("Initializing DRM Core...")
 
-        # First, sync with GPU providers asynchronously
+        # First initialize scheduler providers
+        await self.scheduler.initialize_providers(self.config)
+
+        # Then sync with GPU providers asynchronously
         logger.info("Fetching available GPUs from providers...")
         await self.sync_gpu_database()
 
@@ -66,49 +69,23 @@ class DRMCore:
             results = await asyncio.gather(*tasks, return_exceptions=True)
 
             all_gpus = []
-            session = self.SessionLocal()
-            try:
-                # Clear existing GPU instances
-                logger.info("Clearing existing GPU instances from database...")
-                session.query(GPUInstance).delete()
+            # Process results without database operations
+            for name, result in zip(providers.keys(), results):
+                if isinstance(result, Exception):
+                    logger.error(f"Error fetching from {name}: {result}")
+                else:
+                    logger.info(f"Found {len(result)} GPUs from {name}")
+                    all_gpus.extend(result)
 
-                # Store new GPU instances
-                for name, result in zip(providers.keys(), results):
-                    if isinstance(result, Exception):
-                        logger.error(f"Error fetching from {name}: {result}")
-                    else:
-                        logger.info(f"Found {len(result)} GPUs from {name}")
-                        for gpu in result:
-                            session.add(gpu)
-                            all_gpus.append(gpu)
-
-                # Commit the changes
-                session.commit()
-                logger.info(f"Stored {len(all_gpus)} GPUs in database")
-
-                # Verify stored data
-                stored_count = session.query(GPUInstance).count()
+            # Show found GPUs
+            logger.info("\n=== Found GPUs ===")
+            for gpu in all_gpus:
                 logger.info(
-                    f"Database now contains {stored_count} GPU instances"
+                    f"  - {gpu.provider}: {gpu.gpu_type} ({gpu.memory_gb}GB) "
+                    f"@ ${gpu.price_per_hour}/hr in {gpu.region}"
                 )
 
-                # Show stored GPUs
-                stored_gpus = session.query(GPUInstance).all()
-                logger.info("\n=== Stored GPUs in Database ===")
-                for gpu in stored_gpus:
-                    logger.info(
-                        f"  - {gpu.provider}: {gpu.gpu_type} ({gpu.memory_gb}GB) "
-                        f"@ ${gpu.price_per_hour}/hr in {gpu.region}"
-                    )
-
-                return all_gpus
-
-            except Exception as e:
-                logger.error(f"Database error: {e}")
-                session.rollback()
-                raise
-            finally:
-                session.close()
+            return all_gpus
 
         except Exception as e:
             logger.error(f"Error initializing providers: {e}")
@@ -163,19 +140,25 @@ class DRMCore:
         gpus = await self.initialize_providers()
         session = self.SessionLocal()
         try:
-            # Clear existing entries
+            # Log current state
             old_count = session.query(GPUInstance).count()
             logger.info(f"\n=== Database Sync ===")
             logger.info(f"Current GPU count in database: {old_count}")
 
-            session.query(GPUInstance).delete()
-            # Add new GPUs
-            for gpu in gpus:
-                session.add(gpu)
-            session.commit()
+            # Only update if we have new GPUs and the count changed
+            if gpus and len(gpus) != old_count:
+                logger.info(f"Updating database with {len(gpus)} new GPUs")
+                session.query(GPUInstance).delete()
+                # Add new GPUs
+                for gpu in gpus:
+                    session.add(gpu)
+                session.commit()
 
-            new_count = session.query(GPUInstance).count()
-            logger.info(f"Updated database with {new_count} GPUs")
+                new_count = session.query(GPUInstance).count()
+                logger.info(f"Updated database with {new_count} GPUs")
+            else:
+                logger.info(f"Keeping existing {old_count} GPUs in database")
+
             logger.info(f"Database location: {self.config.get_db_path()}")
             return True
         except Exception as e:

@@ -1,60 +1,52 @@
 import logging
 from typing import List
 
-import aiohttp
-from base import CloudGPUProvider
-from models import GPUInstance
+from ..models import GPUInstance
+from .base_provider import BaseCloudProvider
 
 logger = logging.getLogger(__name__)
 
 
-class VastAIProvider(CloudGPUProvider):
+class VastAIProvider(BaseCloudProvider):
     def __init__(self, api_key: str):
-        self.api_key = api_key
-        self.base_url = "https://console.vast.ai/api/v0"
-        self.headers = {"Authorization": f"Bearer {api_key}"}
+        super().__init__(
+            api_key=api_key, base_url="https://console.vast.ai/api/v0"
+        )
         logger.info("VastAI provider initialized")
 
     async def list_available_gpus(self) -> List[GPUInstance]:
-        try:
-            async with aiohttp.ClientSession() as session:
-                logger.info(
-                    f"Requesting GPUs from Vast.ai: {self.base_url}/instances/"
-                )
-                async with session.get(
-                    f"{self.base_url}/instances/", headers=self.headers
-                ) as response:
-                    if response.status == 200:
-                        data = await response.json()
-                        logger.info(f"Vast.ai response: {data}")
-                        instances = []
-                        for instance in data.get("instances", []):
-                            try:
-                                instances.append(
-                                    GPUInstance(
-                                        provider="vast.ai",
-                                        instance_id=str(instance["id"]),
-                                        gpu_type=instance["gpu_name"],
-                                        memory_gb=instance["gpu_ram"]
-                                        / 1024,  # Convert to GB
-                                        price_per_hour=instance["dph_total"],
-                                        region=instance["geolocation"],
-                                        available=instance["actual_status"]
-                                        == "running",
-                                    )
-                                )
-                                logger.info(
-                                    f"Added instance: {instance['id']} - {instance['gpu_name']}"
-                                )
-                            except Exception as e:
-                                logger.error(
-                                    f"Error processing instance {instance.get('id', 'unknown')}: {str(e)}"
-                                )
-                                continue
-                        return instances
-                    else:
-                        logger.error(f"Vast.ai error: {response.status}")
-                        return []
-        except Exception as e:
-            logger.error(f"Error querying Vast.ai: {e}")
+        self.logger.info("\n=== Querying VastAI for available GPUs ===")
+        data = await self._make_request("instances/")
+        if not data:
             return []
+
+        gpus = [
+            self._parse_gpu_instance(instance)
+            for instance in data.get("instances", [])
+        ]
+        self.logger.info(f"\n=== Found {len(gpus)} GPUs from VastAI ===")
+        for gpu in gpus:
+            self._log_gpu_details(gpu)
+        return gpus
+
+    def _parse_gpu_instance(self, instance: dict) -> GPUInstance:
+        try:
+            gpu = GPUInstance(
+                provider="vast.ai",
+                id=str(instance["id"]),
+                instance_id=str(instance["id"]),
+                gpu_type=instance["gpu_name"],
+                memory_gb=instance["gpu_ram"] / 1024,
+                price_per_hour=instance["dph_total"],
+                region=instance["geolocation"],
+                available=instance["actual_status"] == "running",
+                status="available"
+                if instance["actual_status"] == "running"
+                else "unavailable",
+            )
+            self.logger.debug(f"Parsed GPU instance: {gpu}")
+            return gpu
+        except KeyError as e:
+            self.logger.error(f"Missing key while parsing GPU instance: {e}")
+            self.logger.debug(f"Raw instance data: {instance}")
+            raise

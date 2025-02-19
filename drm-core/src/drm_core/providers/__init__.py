@@ -1,7 +1,10 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List
 
-from models import GPUInstance
+from ..models import GPUInstance
+from .base_provider import BaseCloudProvider
+from .lambdalabs import LambdaLabsProvider
+from .vastai import VastAIProvider
 
 
 async def query_lambda_labs() -> List[Dict[str, Any]]:
@@ -38,9 +41,9 @@ class CloudGPUProvider(ABC):
 
 
 __all__ = [
+    "BaseCloudProvider",
     "VastAIProvider",
     "LambdaLabsProvider",
-    "CoreWeaveProvider",
     "query_lambda_labs",
     "query_vast_ai",
 ]

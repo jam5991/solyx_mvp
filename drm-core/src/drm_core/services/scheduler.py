@@ -1,9 +1,9 @@
 import logging
 from typing import Dict, Optional
 
-from models import GPUInstance
-from providers import CloudGPUProvider
-from repository import GPURepository
+from ..database.repository import GPURepository
+from ..models import GPUInstance
+from ..providers import BaseCloudProvider
 
 logger = logging.getLogger(__name__)
 
@@ -13,10 +13,10 @@ class Scheduler:
 
     def __init__(self, gpu_repository: GPURepository):
         self.repo = gpu_repository
-        self.providers: Dict[str, CloudGPUProvider] = {}
+        self.providers: Dict[str, BaseCloudProvider] = {}
         self.logger = logging.getLogger(__name__)
 
-    def add_provider(self, provider: CloudGPUProvider, name: str):
+    def add_provider(self, provider: BaseCloudProvider, name: str):
         """Add a GPU provider to the scheduler"""
         self.providers[name] = provider
         logger.info(f"Added provider: {name}")
@@ -41,14 +41,22 @@ class Scheduler:
         gpu_type: Optional[str] = None,
         provider: Optional[str] = None,
     ) -> Optional[GPUInstance]:
-        """Find best available GPU matching requirements"""
+        """Find an available GPU matching requirements"""
         try:
-            # Query available GPUs
+            # Update available GPUs from all providers
+            for provider_name, provider_instance in self.providers.items():
+                if provider and provider_name != provider:
+                    continue
+
+                gpus = await provider_instance.list_available_gpus()
+                for gpu in gpus:
+                    self.repo.add_gpu_instance(gpu)
+
+            # Query for matching GPU
             query = self.repo.session.query(GPUInstance).filter(
                 GPUInstance.available == True
             )
 
-            # Apply filters based on requirements
             if min_memory:
                 query = query.filter(GPUInstance.memory_gb >= min_memory)
             if max_price:
@@ -58,25 +66,20 @@ class Scheduler:
             if provider:
                 query = query.filter(GPUInstance.provider == provider)
 
-            # Order by best value (lowest price per memory)
-            query = query.order_by(
-                GPUInstance.price_per_hour / GPUInstance.memory_gb
-            )
+            # Order by price and get first available
+            gpu = query.order_by(GPUInstance.price_per_hour).first()
 
-            gpu = query.first()
             if gpu:
-                self.logger.info(
-                    f"Found suitable GPU: {gpu.gpu_type} with {gpu.memory_gb}GB at ${gpu.price_per_hour}/hour"
+                logger.info(
+                    f"Found suitable GPU: {gpu.gpu_type} ({gpu.instance_id})"
                 )
             else:
-                self.logger.warning(
-                    "No suitable GPU found matching requirements"
-                )
+                logger.warning("No suitable GPU found matching requirements")
 
             return gpu
 
         except Exception as e:
-            self.logger.error(f"Error finding available GPU: {e}")
+            logger.error(f"Error finding available GPU: {e}")
             return None
 
     async def allocate_gpu(

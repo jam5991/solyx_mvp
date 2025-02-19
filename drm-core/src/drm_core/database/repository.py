@@ -2,8 +2,9 @@ import logging
 from datetime import datetime
 from typing import Dict, List, Optional
 
-from models import GPUAllocation, GPUInstance
 from sqlalchemy.orm import Session
+
+from ..models import GPUAllocation, GPUInstance
 
 logger = logging.getLogger(__name__)
 
@@ -13,15 +14,6 @@ class GPURepository:
 
     def __init__(self, session: Session):
         self.session = session
-
-    def track_gpu(self, gpu: GPUInstance):
-        """Store GPU instance and its current state"""
-
-    def update_gpu_status(self, instance_id: str, status: str):
-        """Update GPU status (available, allocated, etc)"""
-
-    def get_available_gpus(self) -> List[GPUInstance]:
-        """Get list of available GPUs"""
 
     def create_gpu_instance(
         self,

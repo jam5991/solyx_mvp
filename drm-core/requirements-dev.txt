@@ -8,3 +8,7 @@ black>=22.0.0
 isort>=5.10.0
 mypy>=0.950
 flake8>=4.0.0
+
+# Database Development Tools
+sqlalchemy-utils>=0.41.1  # Useful SQLAlchemy utilities
+alembic>=1.11.0          # Database migrations

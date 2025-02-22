@@ -112,9 +112,19 @@ class Scheduler:
                 logger.warning(f"No suitable GPU found for job {job_id}")
                 return None
 
+            logger.info(f"\n=== Selected GPU for job {job_id} ===")
+            logger.info(f"Provider: {gpu.provider}")
+            logger.info(f"Type: {gpu.gpu_type}")
+            logger.info(f"Memory: {gpu.memory_gb}GB")
+            logger.info(f"Price: ${gpu.price_per_hour}/hour")
+            logger.info(f"Region: {gpu.region}")
+            logger.info("=====================================")
+
             # Track allocation in repository
-            self.repo.create_allocation(job_id, gpu.instance_id)
-            logger.info(f"Allocated GPU {gpu.instance_id} for job {job_id}")
+            allocation = self.repo.create_allocation(job_id, gpu.instance_id)
+            if not allocation:
+                logger.error(f"Failed to create allocation for job {job_id}")
+                return None
 
             return gpu
 

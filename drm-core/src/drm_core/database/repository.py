@@ -58,59 +58,87 @@ class GPURepository:
         self, instance_id: str, job_id: str
     ) -> Optional[GPUAllocation]:
         """Allocate a GPU for a job"""
-        gpu = (
-            self.session.query(GPUInstance)
-            .filter(
-                GPUInstance.instance_id == instance_id,
-                GPUInstance.available == True,
-            )
-            .first()
-        )
-
-        if not gpu:
-            return None
-
-        gpu.available = False
-        allocation = GPUAllocation(
-            gpu_instance_id=gpu.id,
-            job_id=job_id,
-            price_at_allocation=gpu.price_per_hour,
-        )
-
-        self.session.add(allocation)
-        self.session.commit()
-        self.session.refresh(allocation)
-        return allocation
-
-    def release_gpu(self, job_id: str) -> bool:
-        """Release GPU allocation for a given job"""
         try:
-            # Find the allocation
-            allocation = (
-                self.session.query(GPUAllocation)
-                .filter(GPUAllocation.job_id == job_id)
+            # Get the GPU by instance_id
+            gpu = (
+                self.session.query(GPUInstance)
+                .filter(GPUInstance.instance_id == instance_id)
                 .first()
             )
 
-            if allocation:
-                # Update the allocation's released_at timestamp
-                allocation.released_at = datetime.utcnow()
+            if not gpu or not gpu.available:
+                logger.error(f"GPU {instance_id} not available for allocation")
+                return None
 
-                # Mark the GPU as available again
-                gpu = (
-                    self.session.query(GPUInstance)
-                    .filter(GPUInstance.id == allocation.gpu_instance_id)
-                    .first()
-                )
-                if gpu:
-                    gpu.available = True
+            # Debug: Print current database state
+            logger.info("=== Current Database State ===")
+            logger.info(
+                f"GPU Instances: {self.session.query(GPUInstance).count()}"
+            )
+            logger.info(
+                f"GPU Allocations: {self.session.query(GPUAllocation).count()}"
+            )
 
-                self.session.commit()
-                return True
-            return False
+            # Create allocation
+            allocation = GPUAllocation(
+                gpu_instance_id=gpu.id,
+                job_id=job_id,
+                price_at_allocation=gpu.price_per_hour,
+            )
+
+            # Update GPU status
+            gpu.available = False
+            gpu.status = "allocated"
+            gpu.last_updated = datetime.utcnow()
+
+            # Save changes
+            self.session.add(allocation)
+            self.session.commit()
+
+            # Debug: Print updated database state
+            logger.info("=== Updated Database State ===")
+            logger.info(
+                f"GPU Instances: {self.session.query(GPUInstance).count()}"
+            )
+            logger.info(
+                f"GPU Allocations: {self.session.query(GPUAllocation).count()}"
+            )
+            logger.info(f"New Allocation: {allocation}")
+            logger.info(f"Updated GPU: {gpu}")
+
+            return allocation
+
         except Exception as e:
-            logger.error(f"Error releasing GPU for job {job_id}: {e}")
             self.session.rollback()
+            logger.error(f"Failed to allocate GPU: {e}")
+            return None
+
+    def release_gpu(self, job_id: str) -> bool:
+        """Release a GPU allocation for a job"""
+        try:
+            # Find the allocation
+            allocation = self.get_allocation_by_job_id(job_id)
+            if not allocation:
+                logger.error(f"No allocation found for job {job_id}")
+                return False
+
+            # Mark the allocation as released
+            allocation.released_at = datetime.utcnow()
+
+            # Mark the GPU as available again
+            gpu = self.get_gpu_by_id(allocation.gpu_instance_id)
+            if gpu:
+                gpu.available = True
+                gpu.status = "available"
+                gpu.last_updated = datetime.utcnow()
+
+            self.session.commit()
+            logger.info(f"Released GPU allocation for job {job_id}")
+            return True
+
+        except Exception as e:
+            self.session.rollback()
+            logger.error(f"Failed to release GPU for job {job_id}: {e}")
             return False
 
     def update_allocation_energy(
@@ -242,6 +270,50 @@ class GPURepository:
         self.session.commit()
         return gpu
 
+    def create_allocation(
+        self, job_id: str, instance_id: str
+    ) -> Optional[GPUAllocation]:
+        """Create and store a new GPU allocation"""
+        try:
+            # Get the GPU by instance_id
+            gpu = (
+                self.session.query(GPUInstance)
+                .filter(GPUInstance.instance_id == instance_id)
+                .first()
+            )
+
+            if not gpu:
+                logger.error(f"GPU instance {instance_id} not found")
+                return None
+
+            # Create new allocation
+            allocation = GPUAllocation(
+                gpu_instance_id=gpu.id,  # Use the database ID
+                job_id=job_id,
+                price_at_allocation=gpu.price_per_hour,
+            )
+
+            # Mark GPU as unavailable
+            gpu.available = False
+            gpu.status = "allocated"
+            gpu.last_updated = datetime.utcnow()
+
+            # Save changes
+            self.session.add(allocation)
+            self.session.commit()
+
+            logger.info(f"Created allocation for job {job_id}")
+            logger.info(
+                f"Status: GPU {gpu.gpu_type} allocated at ${gpu.price_per_hour}/hour"
+            )
+
+            return allocation
+
+        except Exception as e:
+            self.session.rollback()
+            logger.error(f"Failed to create allocation: {e}")
+            return None
+
     def get_gpu_allocations(self, gpu_id: int) -> List[GPUAllocation]:
         """Get allocation history for a GPU"""
         return (
@@ -292,3 +364,70 @@ class GPURepository:
             self.session.rollback()
             logger.error(f"Error adding/updating GPU {gpu.instance_id}: {e}")
             raise
+
+    def clear_database(self) -> bool:
+        """Clear all data from the database"""
+        try:
+            # Delete all allocations first (due to foreign key constraints)
+            self.session.query(GPUAllocation).delete()
+            # Then delete all GPU instances
+            self.session.query(GPUInstance).delete()
+            self.session.commit()
+            logger.info("Database cleared successfully")
+            return True
+        except Exception as e:
+            self.session.rollback()
+            logger.error(f"Failed to clear database: {e}")
+            return False
+
+    def get_database_status(self) -> Dict:
+        """Get current status of database tables"""
+        try:
+            gpus = self.session.query(GPUInstance).all()
+            allocations = self.session.query(GPUAllocation).all()
+
+            return {
+                "gpus": [
+                    {
+                        "id": g.id,
+                        "instance_id": g.instance_id,
+                        "available": g.available,
+                        "status": g.status,
+                    }
+                    for g in gpus
+                ],
+                "allocations": [
+                    {
+                        "job_id": a.job_id,
+                        "gpu_id": a.gpu_instance_id,
+                        "allocated_at": a.allocated_at,
+                    }
+                    for a in allocations
+                ],
+            }
+        except Exception as e:
+            logger.error(f"Failed to get database status: {e}")
+            return {"error": str(e)}
+
+    def print_database_state(self):
+        """Print current state of database tables"""
+        try:
+            gpus = self.session.query(GPUInstance).all()
+            allocations = self.session.query(GPUAllocation).all()
+
+            logger.info("\n=== Database State ===")
+            logger.info(f"Total GPUs: {len(gpus)}")
+            for gpu in gpus:
+                logger.info(
+                    f"GPU: {gpu.instance_id} - Status: {gpu.status} - Available: {gpu.available}"
+                )
+
+            logger.info(f"\nTotal Allocations: {len(allocations)}")
+            for alloc in allocations:
+                logger.info(
+                    f"Allocation: Job {alloc.job_id} - GPU {alloc.gpu_instance_id}"
+                )
+            logger.info("=====================")
+
+        except Exception as e:
+            logger.error(f"Error getting database state: {e}")

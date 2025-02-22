@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Boolean, Column, DateTime, Float, String
+from sqlalchemy import Boolean, Column, DateTime, Float, Integer, String
 from sqlalchemy.orm import relationship
 
 from .base import Base
@@ -9,7 +9,7 @@ from .base import Base
 class GPUInstance(Base):
     __tablename__ = "gpu_instances"
 
-    id = Column(String, primary_key=True)
+    id = Column(Integer, primary_key=True)
     provider = Column(String, nullable=False)
     instance_id = Column(String)
     gpu_type = Column(String, nullable=False)

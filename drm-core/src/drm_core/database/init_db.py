@@ -6,7 +6,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
-from ..models.gpu import Base, GPUInstance  # Import Base from gpu.py
+from ..models import Base  # Updated import
 
 logger = logging.getLogger(__name__)
 

@@ -2,34 +2,43 @@ import asyncio
 import logging
 from typing import Dict, List, Optional
 
-from .config.settings import DRMConfig
+from .config import DRMConfig
 from .database import init_database
 from .database.repository import GPURepository
 from .models import GPUInstance
-from .monitoring import ResourceMonitor
+from .monitoring import JobTracker, ResourceMonitor
 from .providers import LambdaLabsProvider, VastAIProvider
 from .services import JobManager, Scheduler
-from .utils.logging import configure_logging
 
 logger = logging.getLogger(__name__)
 
 
 class DRMCore:
-    def __init__(self, config: DRMConfig = None):
-        if config is None:
-            config = DRMConfig()
+    def __init__(self, config: DRMConfig = None, clear_db: bool = False):
+        """Initialize DRM Core
 
-        self.config = config
-        configure_logging()  # Configure logging first
+        Args:
+            config: Configuration object
+            clear_db: If True, clear database on startup
+        """
+        self.config = config or DRMConfig()
 
         # Initialize database
-        self.engine, self.SessionLocal = init_database(config.get_db_path())
+        self.engine, self.SessionLocal = init_database(
+            self.config.get_db_path()
+        )
         session = self.SessionLocal()
-
-        # Initialize core components
         self.repo = GPURepository(session)
+
+        # Clear database if requested
+        if clear_db:
+            logger.info("Clearing database on startup")
+            self.repo.clear_database()
+
+        # Initialize components
         self.scheduler = Scheduler(self.repo)
         self.job_manager = JobManager(self.repo, self.scheduler)
+        self.job_tracker = JobTracker(self.repo)
         self.resource_monitor = ResourceMonitor()
 
         # Don't initialize Ray here
@@ -225,7 +234,7 @@ async def main():
 
         # 2. Initialize Core and Query GPUs
         logger.info("\n=== Initializing DRM Core ===")
-        drm = DRMCore(config)
+        drm = DRMCore(config, clear_db=True)
 
         logger.info("\n=== Querying GPU Providers ===")
         gpus = await drm.initialize_providers()  # This will print GPU details

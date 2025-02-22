@@ -26,6 +26,7 @@ class DRMConfig(BaseSettings):
     db_url: str = f"sqlite:///{default_db_path}"
     lambda_api_key: str = os.getenv("LAMBDA_API_KEY", "")
     vast_api_key: str = os.getenv("VAST_API_KEY", "")
+    clear_db: bool = False
 
     # Ray settings
     ray_dashboard: bool = False

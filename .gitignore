@@ -80,3 +80,5 @@ dist/
 build/
 *.db # database file
 *.csv
+
+*.db

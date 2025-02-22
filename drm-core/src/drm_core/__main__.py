@@ -51,6 +51,11 @@ def run():
         default=32,
         help="Training batch size",
     )
+    parser.add_argument(
+        "--clear-db",
+        action="store_true",
+        help="Clear database on startup",
+    )
     args = parser.parse_args()
 
     try:
@@ -65,7 +70,7 @@ def run():
         # Initialize DRM Core first
         logger.info("=== Initializing DRM Core ===")
         config = DRMConfig()
-        drm = DRMCore(config)
+        drm = DRMCore(config=config, clear_db=args.clear_db)
 
         # Initialize core services
         asyncio.run(drm.initialize())
